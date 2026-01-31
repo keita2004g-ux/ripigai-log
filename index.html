@@ -52,16 +52,12 @@
             </h2>
             <div class="space-y-6 text-sm text-gray-600 leading-relaxed">
                 <section>
-                    <h3 class="font-bold text-orange-600 mb-1 italic">Step 01. 商品ページを開く</h3>
-                    <p>Amazon公式アプリやブラウザで、普段リピート購入している商品のページを開きます。</p>
+                    <h3 class="font-bold text-orange-600 mb-1 italic">Step 01. リンクをコピー</h3>
+                    <p>Amazon公式アプリやブラウザで、商品名付近の「共有ボタン」をタップし、「リンクをコピー」を選択してください。</p>
                 </section>
                 <section>
-                    <h3 class="font-bold text-orange-600 mb-1 italic">Step 02. リンクをコピー</h3>
-                    <p>商品名付近の「共有ボタン」をタップし、「リンクをコピー」を選択してください。</p>
-                </section>
-                <section>
-                    <h3 class="font-bold text-orange-600 mb-1 italic">Step 03. アプリに登録</h3>
-                    <p>当アプリの「URLをペースト」欄に貼り付けて追加。次回から1タップで商品ページへアクセスできます。価格推移の確認も可能です。</p>
+                    <h3 class="font-bold text-orange-600 mb-1 italic">Step 02. アプリに登録</h3>
+                    <p>当アプリの「URLをペースト」欄に貼り付けて追加。次回から1タップで商品ページへアクセスできます。</p>
                 </section>
             </div>
         </div>
@@ -70,8 +66,7 @@
             <div class="px-4 mb-4">
                 <h2 class="text-sm font-black text-gray-400 uppercase tracking-widest italic">管理人のリピ買い品</h2>
             </div>
-            <div id="adminPicks" class="grid gap-4 grid-cols-1">
-                </div>
+            <div id="adminPicks" class="grid gap-4 grid-cols-1"></div>
         </div>
 
     </main>
@@ -88,33 +83,53 @@
     <script>
         const MY_STORE_ID = 'repigai-22';
 
-        // 審査員が見るための「固定コンテンツ」
+        // おすすめ商品のデータを修正（IDを追加し、確実に表示されるように）
         const RECOMMENDED_ITEMS = [
-            { name: "SOLIMO 天然水 2L×9本", asin: "B07H7S869L", memo: "コスパ最強の水。備蓄用にローリングストックしています。" },
-            { name: "MS+B ウィルキンソン タンサン 500ml×24本", asin: "B073Z9775X", memo: "ラベルレスでゴミ捨てが楽。常に在庫しています。" }
+            { id: 'rec1', name: "SOLIMO 天然水 2L×9本", asin: "B07H7S869L", memo: "コスパ最強の水。備蓄用にいつも買っています。" },
+            { id: 'rec2', name: "MS+B ウィルキンソン タンサン 500ml×24本", asin: "B073Z9775X", memo: "ラベルレスでゴミ捨てが楽。常に在庫しています。" }
         ];
 
         let items = JSON.parse(localStorage.getItem('amazonStocks')) || [];
 
+        // ASIN抽出ロジックを強化
         function extractASIN(url) {
-            const regex = /\/(?:dp|gp\/product|exec\/obidos\/asin)\/([A-Z0-9]{10})/i;
+            if (!url) return null;
+            const regex = /\/(?:dp|gp\/product|exec\/obidos\/asin)\/([A-Z0-9]{10})|(?:asin=)([A-Z0-9]{10})/i;
             const match = url.match(regex);
-            return match ? match[1] : (url.length === 10 ? url.toUpperCase() : null);
+            if (match) return match[1] || match[2];
+            
+            // 短縮URLの場合（amzn.asia/d/xxxxxxx）などは、この簡易抽出では難しいため
+            // 手動入力やASIN直接入力にも対応できるようガードをかける
+            const cleanUrl = url.trim();
+            if (cleanUrl.length === 10 && /^[A-Z0-9]{10}$/i.test(cleanUrl)) return cleanUrl.toUpperCase();
+            
+            return null;
         }
 
         function addItem() {
-            const url = document.getElementById('amazonUrl').value;
+            const urlInput = document.getElementById('amazonUrl').value;
             const name = document.getElementById('itemName').value;
             const memo = document.getElementById('itemMemo').value;
-            const asin = extractASIN(url);
+            const asin = extractASIN(urlInput);
 
-            if (!asin || !name) return alert('URLと名前を入力してください');
+            if (!asin) {
+                alert('AmazonのURLから商品を特定できませんでした。URL全体を正しく貼り付けてください。');
+                return;
+            }
+            if (!name) return alert('表示名を入力してください');
 
-            items.unshift({ id: Date.now(), name, asin, memo, lastBought: new Date().toLocaleDateString() });
+            items.unshift({ 
+                id: Date.now(), 
+                name, 
+                asin, 
+                memo, 
+                lastBought: new Date().toLocaleDateString() 
+            });
             localStorage.setItem('amazonStocks', JSON.stringify(items));
             render();
             document.getElementById('amazonUrl').value = '';
             document.getElementById('itemName').value = '';
+            document.getElementById('itemMemo').value = '';
         }
 
         function deleteItem(id) {
@@ -125,19 +140,24 @@
             }
         }
 
+        // カード生成関数を改善
         function createCard(item, isPersistent = false) {
             const amazonUrl = `https://www.amazon.co.jp/dp/${item.asin}/?tag=${MY_STORE_ID}`;
             const keepaUrl = `https://keepa.com/#!product/1-${item.asin}`;
+            
             return `
                 <div class="bg-white p-6 rounded-[2rem] card-shadow border border-white relative">
                     <div class="flex justify-between items-start mb-4">
-                        <h3 class="font-black text-gray-800 text-lg leading-tight">${item.name}</h3>
-                        ${!isPersistent ? `<button onclick="deleteItem(${item.id})" class="text-gray-200 hover:text-red-300">✕</button>` : ''}
+                        <div class="text-left">
+                            <h3 class="font-black text-gray-800 text-lg leading-tight mb-1">${item.name}</h3>
+                            ${item.lastBought ? `<span class="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Last: ${item.lastBought}</span>` : ''}
+                        </div>
+                        ${!isPersistent ? `<button onclick="deleteItem(${item.id})" class="text-gray-200 hover:text-red-300 transition-colors">✕</button>` : ''}
                     </div>
-                    <div class="bg-gray-50 text-gray-500 text-[11px] p-4 rounded-2xl mb-5 border border-gray-100 text-left">📝 ${item.memo}</div>
+                    ${item.memo ? `<div class="bg-gray-50 text-gray-500 text-[11px] p-4 rounded-2xl mb-5 border border-gray-100 text-left leading-relaxed">📝 ${item.memo}</div>` : ''}
                     <div class="grid grid-cols-2 gap-3 mb-2">
-                        <a href="${keepaUrl}" target="_blank" class="flex items-center justify-center border-2 border-gray-100 text-gray-400 py-3 rounded-2xl text-[10px] font-black uppercase">価格推移</a>
-                        <a href="${amazonUrl}" target="_blank" class="flex items-center justify-center amazon-orange text-white py-3 rounded-2xl text-sm font-black shadow-lg">購入</a>
+                        <a href="${keepaUrl}" target="_blank" class="flex items-center justify-center border-2 border-gray-100 text-gray-400 py-3 rounded-2xl text-[10px] font-black uppercase active:bg-gray-50 transition-all">価格推移</a>
+                        <a href="${amazonUrl}" target="_blank" class="flex items-center justify-center amazon-orange text-white py-3 rounded-2xl text-sm font-black shadow-lg shadow-orange-100 active:scale-95 transition-all">購入</a>
                     </div>
                 </div>
             `;
@@ -146,10 +166,14 @@
         function render() {
             const list = document.getElementById('itemList');
             const adminPicks = document.getElementById('adminPicks');
+            
+            // 件数表示
             document.getElementById('itemCount').innerText = `${items.length} items`;
             
             // ユーザーリストの描画
-            list.innerHTML = items.length ? items.map(item => createCard(item)).join('') : '<p class="text-center text-gray-400 py-10 text-xs">登録された商品はありません</p>';
+            list.innerHTML = items.length 
+                ? items.map(item => createCard(item)).join('') 
+                : '<div class="text-center py-10 bg-white rounded-[2rem] border-2 border-dashed border-gray-100 text-gray-300 text-[10px] font-bold uppercase tracking-widest">No Personal Items</div>';
             
             // おすすめ（固定）リストの描画
             adminPicks.innerHTML = RECOMMENDED_ITEMS.map(item => createCard(item, true)).join('');
