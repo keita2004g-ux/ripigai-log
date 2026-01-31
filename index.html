@@ -2,42 +2,56 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リピ買い管理 - Amazon在庫マネージャー</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>リピ買い管理 - ストックマネージャー</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#232F3E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .amazon-orange { background-color: #FF9900; }
         .amazon-dark { background-color: #232F3E; }
-        .keepa-blue { color: #004B91; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-10">
+<body class="bg-gray-50 min-h-screen pb-10">
 
     <header class="amazon-dark text-white p-4 sticky top-0 z-50 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🛒 リピ買い管理</h1>
-            <input type="text" id="assocId" value="your-tag-22" class="bg-gray-700 text-[10px] px-2 py-1 rounded w-20 outline-none focus:ring-1 focus:ring-orange-400">
+            <h1 class="text-lg font-bold">🛒 リピ買い管理</h1>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-gray-400">Your ID:</span>
+                <input type="text" id="assocId" value="your-tag-22" class="bg-gray-700 text-[10px] px-2 py-1 rounded w-20 outline-none focus:ring-1 focus:ring-orange-400">
+            </div>
         </div>
     </header>
 
     <main class="container mx-auto p-4 max-w-lg">
-        <div class="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-200">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-sm font-bold text-gray-700">新しい商品を登録</h2>
-                <button onclick="searchAmazon()" class="text-xs text-blue-600 font-semibold underline">Amazonで検索して探す</button>
+        
+        <div class="bg-white p-5 rounded-2xl shadow-sm mb-4 border border-gray-200">
+            <h2 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                🔍 商品を探して登録
+            </h2>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="searchQuery" placeholder="商品名を入力（例：洗剤）" class="flex-1 border p-3 rounded-xl text-sm outline-none focus:border-orange-400">
+                <button onclick="quickSearch()" class="amazon-orange text-white px-4 rounded-xl text-sm font-bold">検索</button>
             </div>
+            <p class="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-lg">
+                ※Amazonで商品を開き、URL内の「B0」から始まる10桁の英数字（ASIN）を下の欄に入れてください。
+            </p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm mb-6 border border-gray-200">
             <div class="space-y-3">
-                <input type="text" id="itemName" placeholder="商品名（例：強炭酸水）" class="w-full border p-3 rounded-xl text-sm focus:border-orange-400 outline-none">
-                <input type="text" id="asin" placeholder="URLまたはASINを貼り付け" class="w-full border p-3 rounded-xl text-sm focus:border-orange-400 outline-none">
-                <textarea id="itemMemo" placeholder="自分用メモ（例：1,200円以下の時に買う）" class="w-full border p-3 rounded-xl text-sm focus:border-orange-400 outline-none h-20"></textarea>
-                <button onclick="addItem()" class="w-full amazon-orange text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition">リストに追加</button>
+                <input type="text" id="itemName" placeholder="表示名（例：アリエール 詰め替え）" class="w-full border p-3 rounded-xl text-sm outline-none focus:border-orange-400">
+                <input type="text" id="asin" placeholder="ASIN（10桁のコード）をここに" class="w-full border p-3 rounded-xl text-sm outline-none focus:border-orange-400">
+                <textarea id="itemMemo" placeholder="自分用メモ（例：セールで1,000円以下の時に買う）" class="w-full border p-3 rounded-xl text-sm outline-none h-20 shadow-inner bg-gray-50"></textarea>
+                <button onclick="addItem()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition">リストに追加する</button>
             </div>
         </div>
 
-        <div id="saleBanner" class="hidden bg-red-100 border border-red-200 p-3 rounded-xl mb-6 text-red-700 text-sm font-bold text-center animate-pulse">
-            🔥 現在Amazonビッグセール開催中！
+        <div id="saleBanner" class="hidden bg-red-500 text-white p-3 rounded-xl mb-6 text-sm font-bold text-center animate-bounce">
+            📣 Amazonビッグセール開催中！
         </div>
 
         <div id="itemList" class="grid gap-4 grid-cols-1">
@@ -46,10 +60,31 @@
 
     <script>
         let items = JSON.parse(localStorage.getItem('amazonStocks')) || [];
-        
-        function searchAmazon() {
-            const query = document.getElementById('itemName').value || "";
-            window.open(`https://www.amazon.co.jp/s?k=${encodeURIComponent(query)}`, '_blank');
+        const assocInput = document.getElementById('assocId');
+
+        // IDの保存・読み込み
+        if(localStorage.getItem('myAssocTag')) assocInput.value = localStorage.getItem('myAssocTag');
+        assocInput.addEventListener('change', (e) => localStorage.setItem('myAssocTag', e.target.value));
+
+        // URLパラメータからの読み込み（将来の拡張用）
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('asin')) {
+                document.getElementById('asin').value = params.get('asin');
+                document.getElementById('itemName').value = params.get('name') || "";
+                window.scrollTo(0,0);
+            }
+        });
+
+        function quickSearch() {
+            const q = document.getElementById('searchQuery').value;
+            if(!q) return alert('商品名を入力してください');
+            window.open(`https://www.amazon.co.jp/s?k=${encodeURIComponent(q)}`, '_blank');
+        }
+
+        function extractASIN(input) {
+            const match = input.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/);
+            return match ? match[1] : input.trim().toUpperCase();
         }
 
         function addItem() {
@@ -58,7 +93,8 @@
             const memo = document.getElementById('itemMemo').value;
             const asin = extractASIN(rawAsin);
 
-            if (!name || !asin) return alert('商品名とASINを入力してください');
+            if (!name || !asin) return alert('「表示名」と「ASIN」を入力してください');
+            if (asin.length !== 10) return alert('ASINは10桁の英数字です');
 
             items.push({
                 id: Date.now(),
@@ -68,15 +104,10 @@
                 lastBought: new Date().toLocaleDateString()
             });
             save();
-            // フォームクリア
+            // Clear inputs
             document.getElementById('itemName').value = '';
             document.getElementById('asin').value = '';
             document.getElementById('itemMemo').value = '';
-        }
-
-        function extractASIN(input) {
-            const match = input.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/);
-            return match ? match[1] : input.trim().toUpperCase();
         }
 
         function save() {
@@ -85,7 +116,7 @@
         }
 
         function deleteItem(id) {
-            if(confirm('削除しますか？')) {
+            if(confirm('この商品を削除しますか？')) {
                 items = items.filter(i => i.id !== id);
                 save();
             }
@@ -93,26 +124,32 @@
 
         function render() {
             const list = document.getElementById('itemList');
-            const tag = document.getElementById('assocId').value || 'your-tag-22';
+            const tag = assocInput.value || 'your-tag-22';
             list.innerHTML = '';
+
+            if (items.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">登録された商品はまだありません。</div>';
+                return;
+            }
 
             items.forEach(item => {
                 const amazonUrl = `https://www.amazon.co.jp/dp/${item.asin}/?tag=${tag}`;
                 const keepaUrl = `https://keepa.com/#!product/1-${item.asin}`;
                 
                 const card = document.createElement('div');
-                card.className = 'bg-white p-5 rounded-2xl shadow-sm border border-gray-100';
+                card.className = 'bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden';
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
-                        <button onclick="deleteItem(${item.id})" class="text-gray-300 text-xl">×</button>
+                        <h3 class="font-bold text-gray-800 pr-6">${item.name}</h3>
+                        <button onclick="deleteItem(${item.id})" class="absolute top-4 right-4 text-gray-300 text-xl">✕</button>
                     </div>
-                    ${item.memo ? `<p class="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg mb-4">📝 ${item.memo}</p>` : ''}
-                    <div class="grid grid-cols-2 gap-3 mt-4">
-                        <a href="${keepaUrl}" target="_blank" class="text-center border border-gray-200 py-2 rounded-xl text-[10px] font-bold text-gray-500 hover:bg-gray-50">
-                            📊 価格推移を確認
+                    <p class="text-[10px] text-gray-400 mb-2">ASIN: ${item.asin} / 前回: ${item.lastBought}</p>
+                    ${item.memo ? `<div class="bg-orange-50 text-orange-700 text-xs p-3 rounded-xl mb-4 border border-orange-100">📝 ${item.memo}</div>` : ''}
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="${keepaUrl}" target="_blank" class="flex items-center justify-center border-2 border-gray-100 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-50 transition">
+                            📊 価格推移
                         </a>
-                        <a href="${amazonUrl}" target="_blank" class="text-center amazon-orange text-white py-2 rounded-xl text-sm font-bold shadow-sm">
+                        <a href="${amazonUrl}" target="_blank" onclick="updateDate(${item.id})" class="flex items-center justify-center amazon-orange text-white py-3 rounded-xl text-sm font-bold shadow-md active:scale-95 transition">
                             再注文する
                         </a>
                     </div>
@@ -121,12 +158,21 @@
             });
         }
 
-        // セール期間判定（例: ブラックフライデー等の期間にtrueにするロジック）
-        const isSale = false; // ここを将来的にAPI等で自動化可能
-        if(isSale) document.getElementById('saleBanner').classList.remove('hidden');
+        function updateDate(id) {
+            const item = items.find(i => i.id === id);
+            if(item) item.lastBought = new Date().toLocaleDateString();
+            localStorage.setItem('amazonStocks', JSON.stringify(items));
+            setTimeout(render, 1000);
+        }
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
 
         render();
     </script>
 </body>
 </html>
-
