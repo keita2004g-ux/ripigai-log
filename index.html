@@ -3,82 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>リピ買い管理</title>
+    <title>リピ買い管理 - ストックマネージャー</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#232F3E">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3737/3737372.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .amazon-orange { background-color: #FF9900; }
         .amazon-dark { background-color: #232F3E; }
-        .input-focus:focus { border-color: #FF9900; ring: 2px; ring-color: #FF9900; }
+        .card-shadow { box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1); }
+        .input-focus:focus { border-color: #FF9900; }
+        /* スムーズなスクロール */
+        html { scroll-behavior: smooth; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-10">
+<body class="bg-[#f0f2f2] min-h-screen flex flex-col font-sans">
 
-    <header class="amazon-dark text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold">🛒 リピ買い管理</h1>
-            <div class="flex items-center gap-2">
-                <input type="text" id="assocId" value="your-tag-22" class="bg-gray-700 text-[10px] px-2 py-1 rounded w-20 outline-none focus:ring-1 focus:ring-orange-400">
+    <header class="amazon-dark text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto max-w-lg flex justify-between items-center">
+            <h1 class="text-xl font-black tracking-tight flex items-center gap-2">
+                <span class="text-2xl">🛒</span> リピ買い管理
+            </h1>
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                <span class="text-[10px] font-bold text-gray-300">ID:</span>
+                <input type="text" id="assocId" value="your-tag-22" class="bg-transparent text-[10px] font-bold w-16 outline-none text-white">
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 max-w-lg">
+    <main class="container mx-auto p-4 max-w-lg flex-grow">
         
-        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-200">
-            <h2 class="text-sm font-bold text-gray-700 mb-4 flex items-center">
-                ✨ AmazonのURLを貼るだけで登録
-            </h2>
+        <div class="bg-white p-6 rounded-[2rem] card-shadow mb-8 border border-white">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-8 h-8 amazon-orange rounded-full flex items-center justify-center shadow-inner">
+                    <span class="text-white text-sm">＋</span>
+                </div>
+                <h2 class="font-bold text-gray-800">商品をリストに追加</h2>
+            </div>
             
-            <div class="space-y-4">
+            <div class="space-y-4 text-sm">
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold ml-1">AMAZON URL</label>
-                    <input type="text" id="amazonUrl" placeholder="ここにURLをペースト" 
-                           class="w-full border-2 border-gray-100 p-4 rounded-2xl text-sm outline-none input-focus bg-gray-50">
+                    <label class="text-[10px] text-gray-400 font-bold ml-2 uppercase tracking-widest">Amazon URL</label>
+                    <input type="text" id="amazonUrl" placeholder="URLを長押しでペースト" 
+                           class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 transition-all">
                 </div>
 
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold ml-1">表示名（自由）</label>
-                    <input type="text" id="itemName" placeholder="例：いつもの炭酸水" 
-                           class="w-full border-2 border-gray-100 p-4 rounded-2xl text-sm outline-none input-focus bg-gray-50">
+                    <label class="text-[10px] text-gray-400 font-bold ml-2 uppercase tracking-widest">アプリでの表示名</label>
+                    <input type="text" id="itemName" placeholder="例：強炭酸水 500ml" 
+                           class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 transition-all">
                 </div>
 
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold ml-1">リピ買いメモ</label>
-                    <textarea id="itemMemo" placeholder="例：特選タイムセールで買う" 
-                              class="w-full border-2 border-gray-100 p-4 rounded-2xl text-sm outline-none input-focus bg-gray-50 h-20"></textarea>
+                    <label class="text-[10px] text-gray-400 font-bold ml-2 uppercase tracking-widest">リピ買いメモ</label>
+                    <textarea id="itemMemo" placeholder="例：定期便よりタイムセールが安い" 
+                              class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 h-24 shadow-inner"></textarea>
                 </div>
 
-                <button onclick="addItem()" class="w-full amazon-orange text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition text-lg">
-                    リストに追加する
+                <button onclick="addItem()" class="w-full amazon-orange text-white font-black py-4 rounded-2xl shadow-md active:scale-[0.98] transition-all text-lg">
+                    リストに追加
                 </button>
             </div>
         </div>
 
+        <div class="flex items-center justify-between mb-4 px-2">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest">My Stock List</h2>
+            <span id="itemCount" class="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">0 items</span>
+        </div>
         <div id="itemList" class="grid gap-4 grid-cols-1"></div>
+
     </main>
+
+    <footer class="p-8 text-center text-gray-400">
+        <div class="max-w-xs mx-auto space-y-4">
+            <p class="text-[10px] leading-relaxed italic">
+                Amazon、Amazon.co.jpおよびAmazon.co.jpロゴは、Amazon.com, Inc.またはその関連会社の商標です。
+            </p>
+            <p class="text-[10px] leading-relaxed font-medium">
+                「リピ買い管理」は、Amazonアソシエイト・プログラムの参加者です。当アプリ内のリンク経由で購入が発生した場合、運営者に適格販売による収入が発生することがあります。
+            </p>
+            <div class="pt-4 border-t border-gray-200">
+                <p class="text-[10px]">&copy; 2026 リピ買い管理 / Web App Powered by Vercel</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
         let items = JSON.parse(localStorage.getItem('amazonStocks')) || [];
         const assocInput = document.getElementById('assocId');
 
-        // IDの保存
         if(localStorage.getItem('myAssocTag')) assocInput.value = localStorage.getItem('myAssocTag');
         assocInput.addEventListener('change', (e) => localStorage.setItem('myAssocTag', e.target.value));
 
-        // URLからASINを抜き出す強力な正規表現
         function extractASIN(url) {
             const regex = /\/(?:dp|gp\/product|exec\/obidos\/asin)\/([A-Z0-9]{10})|(?:asin=)([A-Z0-9]{10})/i;
             const match = url.match(regex);
-            if (match) {
-                return match[1] || match[2];
-            }
-            // URLそのものが10桁のASINだった場合も考慮
-            if (url.trim().length === 10 && /^[A-Z0-9]{10}$/i.test(url.trim())) {
-                return url.trim().toUpperCase();
-            }
+            if (match) return match[1] || match[2];
+            if (url.trim().length === 10 && /^[A-Z0-9]{10}$/i.test(url.trim())) return url.trim().toUpperCase();
             return null;
         }
 
@@ -88,16 +113,10 @@
             const memo = document.getElementById('itemMemo').value;
             const asin = extractASIN(urlInput);
 
-            if (!asin) {
-                alert('URLから商品コードを読み取れませんでした。正しいAmazonのURLを貼ってください。');
-                return;
-            }
-            if (!name) {
-                alert('アプリに表示する名前を入力してください。');
-                return;
-            }
+            if (!asin) return alert('AmazonのURLを正しく貼り付けてください');
+            if (!name) return alert('表示名を入力してください');
 
-            items.push({
+            items.unshift({ // 新しい順に上へ
                 id: Date.now(),
                 name: name,
                 asin: asin,
@@ -109,7 +128,7 @@
             document.getElementById('amazonUrl').value = '';
             document.getElementById('itemName').value = '';
             document.getElementById('itemMemo').value = '';
-            alert('登録完了しました！');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
         function save() {
@@ -118,7 +137,7 @@
         }
 
         function deleteItem(id) {
-            if(confirm('削除してよろしいですか？')) {
+            if(confirm('このアイテムを削除してもよろしいですか？')) {
                 items = items.filter(i => i.id !== id);
                 save();
             }
@@ -126,11 +145,16 @@
 
         function render() {
             const list = document.getElementById('itemList');
+            const countLabel = document.getElementById('itemCount');
             const tag = assocInput.value || 'your-tag-22';
             list.innerHTML = '';
+            countLabel.innerText = `${items.length} items`;
 
             if (items.length === 0) {
-                list.innerHTML = '<p class="text-center py-10 text-gray-400">登録商品はまだありません</p>';
+                list.innerHTML = `
+                    <div class="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-200">
+                        <p class="text-gray-300 text-sm">登録されている商品はまだありません</p>
+                    </div>`;
                 return;
             }
 
@@ -139,22 +163,25 @@
                 const keepaUrl = `https://keepa.com/#!product/1-${item.asin}`;
                 
                 const card = document.createElement('div');
-                card.className = 'bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-2';
+                card.className = 'bg-white p-5 rounded-[2rem] card-shadow border border-white transition-all';
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h3 class="font-bold text-gray-800 text-lg">${item.name}</h3>
-                            <p class="text-[10px] text-gray-400">前回: ${item.lastBought}</p>
+                            <h3 class="font-black text-gray-800 text-lg leading-tight">${item.name}</h3>
+                            <div class="flex gap-2 mt-1">
+                                <span class="text-[9px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">ASIN: ${item.asin}</span>
+                                <span class="text-[9px] bg-blue-50 text-blue-400 px-2 py-0.5 rounded-full font-bold italic">Last: ${item.lastBought}</span>
+                            </div>
                         </div>
-                        <button onclick="deleteItem(${item.id})" class="text-gray-300 px-2 text-xl">✕</button>
+                        <button onclick="deleteItem(${item.id})" class="text-gray-200 hover:text-red-300 transition-colors p-1">✕</button>
                     </div>
-                    ${item.memo ? `<div class="bg-blue-50 text-blue-700 text-xs p-3 rounded-2xl mb-4 border border-blue-100 leading-relaxed">📝 ${item.memo}</div>` : ''}
+                    ${item.memo ? `<div class="bg-gray-50 text-gray-600 text-xs p-4 rounded-2xl mb-4 border border-gray-100 leading-relaxed shadow-inner">📝 ${item.memo}</div>` : ''}
                     <div class="grid grid-cols-2 gap-3">
-                        <a href="${keepaUrl}" target="_blank" class="flex items-center justify-center border-2 border-gray-100 text-gray-500 py-3 rounded-2xl text-xs font-bold active:bg-gray-100 transition">
-                            📊 価格推移
+                        <a href="${keepaUrl}" target="_blank" class="flex items-center justify-center border-2 border-gray-100 text-gray-400 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:bg-gray-50 transition-all">
+                            History
                         </a>
-                        <a href="${amazonUrl}" target="_blank" onclick="updateDate(${item.id})" class="flex items-center justify-center amazon-orange text-white py-3 rounded-2xl text-sm font-bold shadow-md active:scale-95 transition">
-                            再注文
+                        <a href="${amazonUrl}" target="_blank" onclick="updateDate(${item.id})" class="flex items-center justify-center amazon-orange text-white py-3 rounded-2xl text-sm font-black shadow-lg shadow-orange-200 active:scale-95 transition-all">
+                            RE-ORDER
                         </a>
                     </div>
                 `;
