@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>リピ買い管理 - ストックマネージャー</title>
+    <title>リピ買い管理</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#232F3E">
@@ -27,9 +27,8 @@
             <h1 class="text-xl font-black tracking-tight flex items-center gap-2">
                 <span class="text-2xl">🛒</span> リピ買い管理
             </h1>
-            <div class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                <span class="text-[10px] font-bold text-gray-300">ID:</span>
-                <input type="text" id="assocId" value="your-tag-22" class="bg-transparent text-[10px] font-bold w-16 outline-none text-white">
+            <div class="flex items-center">
+                <span class="text-[10px] font-bold text-white/40 tracking-widest uppercase">Personal Edition</span>
             </div>
         </div>
     </header>
@@ -70,19 +69,16 @@
                     <input type="text" id="amazonUrl" placeholder="https://www.amazon.co.jp/..." 
                            class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 transition-all">
                 </div>
-
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold ml-2 uppercase tracking-widest text-gray-400">表示名</label>
                     <input type="text" id="itemName" placeholder="例：いつもの炭酸水" 
                            class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 transition-all">
                 </div>
-
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold ml-2 uppercase tracking-widest text-gray-400">メモ</label>
                     <textarea id="itemMemo" placeholder="例：セール時にまとめ買い" 
                               class="w-full border-2 border-gray-50 p-4 rounded-2xl outline-none input-focus bg-gray-50 h-20 shadow-inner"></textarea>
                 </div>
-
                 <button onclick="addItem()" class="w-full amazon-orange text-white font-black py-4 rounded-2xl shadow-md active:scale-[0.98] transition-all text-lg">
                     リストに追加
                 </button>
@@ -101,7 +97,7 @@
         <div class="max-w-xs mx-auto space-y-4 text-[10px]">
             <p class="italic leading-relaxed">Amazon、Amazon.co.jpおよびAmazon.co.jpロゴは、Amazon.com, Inc.またはその関連会社の商標です。</p>
             <p class="font-medium leading-relaxed">
-                「リピ買い管理」は、Amazonアソシエイト・プログラムの参加者です。当アプリ内のリンク経由で購入が発生した場合、運営者に適格販売による収入が発生することがあります。
+                Amazonのアソシエイトとして、リピ買い管理（repigai-log）は適格販売により収入を得ています。
             </p>
             <div class="pt-4 border-t border-gray-200">
                 <p>&copy; 2026 リピ買い管理 / Powered by Vercel</p>
@@ -110,11 +106,10 @@
     </footer>
 
     <script>
-        let items = JSON.parse(localStorage.getItem('amazonStocks')) || [];
-        const assocInput = document.getElementById('assocId');
+        // 固定のアソシエイトID
+        const MY_STORE_ID = 'repigai-22';
 
-        if(localStorage.getItem('myAssocTag')) assocInput.value = localStorage.getItem('myAssocTag');
-        assocInput.addEventListener('change', (e) => localStorage.setItem('myAssocTag', e.target.value));
+        let items = JSON.parse(localStorage.getItem('amazonStocks')) || [];
 
         function quickSearch() {
             const q = document.getElementById('searchQuery').value;
@@ -168,7 +163,6 @@
         function render() {
             const list = document.getElementById('itemList');
             const countLabel = document.getElementById('itemCount');
-            const tag = assocInput.value || 'your-tag-22';
             list.innerHTML = '';
             countLabel.innerText = `${items.length} items`;
 
@@ -178,7 +172,7 @@
             }
 
             items.forEach(item => {
-                const amazonUrl = `https://www.amazon.co.jp/dp/${item.asin}/?tag=${tag}`;
+                const amazonUrl = `https://www.amazon.co.jp/dp/${item.asin}/?tag=${MY_STORE_ID}`;
                 const keepaUrl = `https://keepa.com/#!product/1-${item.asin}`;
                 
                 const card = document.createElement('div');
